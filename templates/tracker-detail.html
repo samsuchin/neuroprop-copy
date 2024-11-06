@@ -1,0 +1,566 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/tracker.css' %}">
+
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">Tracker Details</h4>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+         <div class="col-12">
+            <div class="progress mb-3">
+                <div class="progress-bar" role="progressbar" style="width: {{ prospect.get_document_progress_percentage }}%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">{{ prospect.get_document_progress_percentage|floatformat }}%</div>
+            </div>   
+         </div>                                                   
+    </div>
+    <div class="row">
+        <div class="col-12 col-lg-8">
+            <!-- project card -->
+            <div class="card d-block">
+                <div id="detail-body" class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0">{{ prospect.name }}</h3>
+                            <div class="badge text-bg-{{ prospect.get_progress_class }}">
+                                {{ prospect.get_status_display }}</div>
+                        </div>
+                        <!-- project title-->
+                        {% if is_staff %}
+                        <a class="btn btn-primary" href="{% url 'edit_propsect' prospect.pk %}">Edit</a>
+                        {% endif %}
+                    </div>
+
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-1">
+                                <h5>Address</h5>
+                                {{ prospect.address.get_address|linebreaks }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-1">
+                                <h5 class="mb-1">Property Type</h5>
+                                <p>{{ prospect.get_property_type_display }}</p>
+                                <h5 class="mb-1">Purpose Type</h5>
+                                <p>{{ prospect.get_purpose_display }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-1">
+                                <h5>Contact</h5>
+                                <div>{{ prospect.created_by.name }}</div>
+                                <div><a
+                                        href="mailto: {{prospect.created_by.email }}">{{ prospect.created_by.email }}</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-1">
+                                <h5>Amount</h5>
+                                <p>${{ prospect.amount|intcomma }}</p>
+                            </div>
+                        </div>
+                        {% if is_staff %}
+                        <div class="col-12 col-lg-6">
+                            <div class="mb-3">
+                                <h5>Context</h5>
+                                <div name="context" id="">{{ prospect.context|linebreaks }}</div>
+                                <div class="">
+                                    {% for key, value in prospect.client_scenario.items %}
+                                    {% if value %}
+                                    <div>{{ key }}: {{ value }}</div>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <small class="text-muted">(Client does not see)</small>
+                            </div>
+                        </div>
+                        <!-- <div class="col-12 col-lg-6">
+                            <div class="mb-3">
+                                <h5>Client Onboard Info</h5>
+                                {% for key, value in prospect.client_scenario.items %}
+                                <div><b>{{ key }}:</b> {{ value }}</div>
+                                {% endfor %}
+                                <small class="text-muted">(Client does not see)</small>
+                            </div>
+                        </div> -->
+
+                        {% endif %}
+                    </div>
+
+                    <div id="tooltip-container">
+                        <h5>Sent To:</h5>
+                        <div class="d-flex align-items-center">
+                            <div>
+                                {% for user in prospect.users.all %}
+                                {% if forloop.last %}
+                                <a class="remove-user"
+                                    href="{% url 'remove-user' %}?prospect_uid={{ prospect.uid }}&target_user_pk={{ user.pk }}">{{ user.email}}</a>
+                                {% else %}
+                                <a class="remove-user"
+                                    href="{% url 'remove-user' %}?prospect_uid={{ prospect.uid }}&target_user_pk={{ user.pk }}">{{ user.email}},
+                                </a>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                            <div class="ms-auto">
+                                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#send-to-modal">Add Users</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div> <!-- end card-body-->
+
+            </div> <!-- end card-->
+
+            <!-- end card-->
+        </div>
+        <div id="" class="col-12 col-lg-4">
+            <!-- <div class="card">
+                <div class="card-body">
+                    <h4 class="header-title">Progress</h4>
+                    <div class="mb-3" id="progress"></div>
+                    <div class="d-flex justify-content-between">
+                        <div class="text-center">
+                       
+                            <i class="mdi mdi-checkbox-blank-circle widget-icon rounded-circle bg-success-lighten text-success"></i>
+                            <div class="my-1">Approved</div>
+                        </div>
+                        <div class="text-center">
+                            <i class="mdi mdi-checkbox-blank-circle widget-icon rounded-circle bg-secondary-lighten text-secondary"></i>
+                            <div class="my-1">Awaiting Upload</div>
+                        </div>
+                        <div class="text-center">
+                            
+                            <i class="mdi mdi-checkbox-blank-circle widget-icon rounded-circle bg-warning-lighten text-warning"></i>
+                            <div class="my-1">Pending</div>
+                        </div>
+                        <div class="text-center">
+                            <i class="mdi mdi-checkbox-blank-circle widget-icon rounded-circle bg-danger-lighten text-danger"></i>
+                            <div class="my-1">Rejected</div>
+                        </div>
+                    </div>
+                </div>
+            </div> -->
+            <div class="card">
+                <div class="card-body">
+                    {% if is_staff %}
+                    <h4 class="header-title">Tasks</h4>
+                    {% else %}
+                    <h4 class="header-title">Conditions</h4>
+                    {% endif %}
+                    <div data-simplebar style="max-height: 300px; height: 300px;">
+                        {% if pipeline %}
+                        {% for document in pipeline %}
+                        <div class="d-flex align-items-center">
+                            <a class="fw-bold"
+                                href="{% url 'tracker-detail' prospect.pk document.document_type.pk %}">{{ document.name }}</a>
+                            <span class="status bg-{{ document.get_status_class }} ms-auto"></span>
+                        </div>
+                        <div class="text-muted">{{ document.uploaded_by.email }} at {{ document.created_at }}</div>
+                        <hr>
+                        {% endfor %}
+
+                        {% else %}
+                        <div class="text-center text-muted mt-3">
+                            No current pending documents to review.
+                        </div>
+                        <div class="text-center text-muted">
+                            {{ prospect.get_todo_count }} more document types to approve.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- <div class="row justify-content-center">
+        <div class="col-lg-7 col-md-10 col-sm-11">
+
+            <div class="horizontal-steps mt-4 mb-4 pb-5" id="tooltip-container">
+                <div class="horizontal-steps-content">
+                    <div class="step-item {% if object.status == 'draft' %}current{% endif %}">
+                        <span>Draft</span>
+                    </div>
+                    <div class="step-item {% if object.status == 'in-progress' %}current{% endif %}">
+                        <span>In Progress</span>
+                    </div>
+                    <div class="step-item {% if object.status == 'correcting' %}current{% endif %}">
+                        <span>Correcting</span>
+                    </div>
+                    <div class="step-item {% if object.status == 'completed' %}current{% endif %}">
+                        <span>Completed</span>
+                    </div>
+                </div>
+
+                <div class="process-line" style="width: {{ object.get_progress_percentage }}%;"></div>
+            </div>
+        </div>
+    </div> -->
+
+    <div class="row">
+        <div class="col-xxl-8 col-xl-7">
+            <div class="card d-block">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h4 class="header-title">{{ current_document_type.type }}</h4>
+                            <div class="text-muted">{{ current_document_type.description }}</div>
+                        </div>
+                        {% if is_staff %}
+                        <div class="dropdown">
+                            <button class="btn btn-light dropdown-toggle" type="button" id="dropdownMenuButton"
+                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                {{ current_document_type.get_status_display }}
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                {% for value, key in DOCUMENT_TYPE_STATUS_CHOICES %}
+                                <form action="{% url 'update_document_type_status' %}" method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="document_type_pk" value="{{ current_document_type.pk }}">
+                                    <input type="hidden" name="status" value="{{ value }}">
+                                    <a class="dropdown-item" href="#" onclick="this.closest('form').submit();">Set
+                                        {{ key }}</a>
+                                </form>
+                                {% endfor %}
+
+                            </div>
+                        </div>
+
+                        {% else %}
+                        <h4>
+                            <span
+                                class="badge badge-{{ current_document_type.get_status_class }}-lighten rounded-pill">{{ current_document_type.get_status_display }}</span>
+                        </h4>
+                        {% endif %}
+
+                    </div>
+
+
+                    <div endpoint="{% url 'poll_openai_document_check' %}" id="document-upload">
+                        {% include 'includes/document-upload.html' %}
+                    </div>
+                    <div style="display: none;" id="document-loading">
+                        <div class="d-flex justify-content-center align-items-center my-5 flex-column">
+                            <div class="spinner-border avatar-md" role="status"></div>
+                            <div class="fw-bold mt-2" id="document-loading-text">Uploading file. Do not reload page!
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        {% for document in current_document_type.documents.all %}
+                        <!-- file preview template -->
+                        <div document_pk="{{ document.pk }}" class="document" checked="{{ document.file_checked }}"
+                            id="uploadPreviewTemplate">
+                            <div class="card mt-1 mb-0 shadow-none border">
+                                <div class="p-2">
+                                    <div class="row align-items-center">
+                                        <div id="document-status" class="col-auto">
+                                            <div class="avatar-sm d-table">
+                                                <span
+                                                    class="avatar-title bg-{{ document.get_status_class }}-lighten rounded-circle text-{{ document.get_status_class }}">
+                                                    <i class="{{ document.get_icon_class }} font-24"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div id="document-loading" class="col-auto" style="display: none;">
+                                            <div class="d-flex justify-content-center">
+                                                <div class="spinner-border text-primary" role="status"></div>
+                                            </div>
+                                        </div>
+                                        <div class="col ps-0 align-items-center">
+                                            <a target="_blank" href="{{ document.file.url }}"
+                                                class="text-muted fw-bold d-flex align-items-center"
+                                                data-dz-name><span>{{ document.name }}</span> <span
+                                                    style="margin-top: 2px;"
+                                                    class="mdi mdi-download font-20 ms-1"></span></a>
+
+                                        </div>
+                                        <div class="col-auto">
+                                            <!-- Button -->
+                                            <a onclick="return confirm('Are you sure you want to delete this?')"
+                                                id="delete-document-link"
+                                                href="{% url 'delete-document' document.uid %}"
+                                                class="btn btn-link btn-lg text-muted" data-dz-remove>
+                                                <i class="ri-close-line"></i>
+                                            </a>
+                                        </div>
+
+                                    </div>
+                                    <div class="d-flex flex-column">
+                                        <div style="display: none;" id="loading-warning" class="text-muted mt-2" id="">
+                                            File is being smart analyzed. We will notify you if there are any issues.
+                                        </div>
+                                        {% if current_document_type.is_image %}
+                                        <div class="text-center">
+                                            <img style="height: 300px;" src="{{ document.file.url }}" class="img-fluid"
+                                                alt="">
+                                        </div>
+                                        {% endif %}
+                                        {% if is_staff %}
+
+                                        {% if document.feedback %}
+
+                                        <h6 class="mb-0">AI Feedback (Staff Only)</h6>
+                                        <div id="ai-feedback" class="my-1 text-muted">{{ document.feedback|safe }}</div>
+
+                                        {% endif %}
+                                        {% if document.client_feedback %}
+                                        <h6 class="mb-0">Client Feedback (Client Sees)</h6>
+                                        <div class="my-1 text-muted">{{ document.client_feedback|safe }}</div>
+                                        {% endif %}
+                                        {% if document.client_question %}
+                                        <h6 class="mb-0">Client Question</h6>
+                                        <div class="my-1 text-muted">{{ document.client_question|safe }}</div>
+                                        {% endif %}
+                                        <div class="mt-2 mb-1 ms-auto">
+                                            <a ai-feedback="{{ document.feedback|safe }}"
+                                                document_uid="{{ document.uid }}" url="{{ document.file.url }}"
+                                                class="btn btn-primary send-client-feedback">Send Feedback</a>
+                                        </div>
+                                        <div class="d-flex my-2 align-items-center">
+                                            <div class="text-muted">Uploaded by {{ document.uploaded_by }}</div>
+                                            {% if document.overridden %}
+                                            <div class="ms-auto">
+                                                <div class="fw-bold">Approved by user</div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        {% else %}
+
+                                        {% if document.client_feedback %}
+                                        <h6 class="mb-0">Condition Feedback</h6>
+                                        <div class="my-1 text-muted">{{ document.client_feedback|safe }}</div>
+                                        {% endif %}
+                                        {% if document.client_question %}
+                                        <h6 class="mb-0">Client Question</h6>
+                                        <div class="my-1 text-muted">{{ document.client_question|safe }}</div>
+                                        {% endif %}
+                                        {% if document.status == 'rejected' %}
+                                        <div class="btn-group mt-2" role="group" aria-label="Basic example">
+                                            <a onclick="clickUploadNew()" type="button" class="btn btn-secondary">Upload
+                                                New Document</a>
+                                            <a document_uid="{{ document.uid }}" type="button"
+                                                class="btn btn-secondary question-btn">Ask Question</a>
+                                            <a type="button"
+                                                onclick="return confirm('Are you sure you want to override this?')"
+                                                href="{% url 'override-document-check' document.uid %}"
+                                                class="btn btn-secondary">Disagree? Override.</a>
+                                        </div>
+                                        {% endif %}
+
+                                        <div class="d-flex my-2 align-items-center">
+                                            <div class="text-muted">Uploaded by {{ document.uploaded_by }}</div>
+                                            {% if document.overridden %}
+                                            <div class="ms-auto">
+                                                <div class="fw-bold">Approved by user</div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        {% endif %}
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div> <!-- end card-->
+
+            <!-- end card-->
+        </div> <!-- end col -->
+
+        <div class="col-xxl-4 col-xl-5">
+
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="header-title">Documents</h4>
+
+                    <div class="list-group list-group-flush">
+                        <a data-bs-toggle="modal"
+                        data-bs-target="#smart-sort-modal"
+                        class="position-relative document_type list-group-item d-flex justify-content-between align-items-center {% if current_document_type == document_type %}active{% endif %}">
+                        Smart Sort
+                        <span class="">
+                            <i style="font-size: 18px;" class="bi bi-stars"></i>
+                        </span>
+                        <!-- {% if document_type.staff_notifications %}
+                        <span class="position-absolute top-50 start-100 translate-middle p-1 bg-danger border rounded-circle"></span>
+                        {% endif %} -->
+                    </a>
+                        {% for document_type in document_types %}
+                        <a href="{% url 'tracker-detail' prospect.pk document_type.pk %}"
+                            class="position-relative document_type list-group-item d-flex justify-content-between align-items-center {% if current_document_type == document_type %}active{% endif %}">
+                            {{ document_type.type }}
+                            <span class="p-1 bg-{{ document_type.get_status_class }} rounded-circle">
+                                <span class="visually-hidden">{{ document_type.status }}</span>
+                            </span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% include 'includes/send-to-user-modal.html' %}
+{% include 'includes/send-client-feedback-modal.html' %}
+{% include 'includes/ask-question-modal.html' %}
+{% include 'includes/smart-sort-modal.html' %}
+
+{% endblock %}
+
+{% block js %}
+<script>
+    let active_document_type = null;
+    let document_type_btns = document.getElementsByClassName("document_type")
+    for (let i = 0; i < document_type_btns.length; i++) {
+        document_type_btns.addEventListener("click", )
+    }
+</script>
+<script src="{% static 'js/dropzone.js' %}"></script>
+<script src="{% static 'js/component.fileupload.js' %}"></script>
+<script>
+    var uploads = document.getElementsByClassName("uploads")
+    for (let i = 0; i < uploads.length; i++) {
+        uploads[i].addEventListener("change", function () {
+            console.log("submitting....")
+            uploads[i].submit();
+        })
+    }
+</script>
+
+<script src="{% static 'js/ai-feedback.js' %}"></script>
+
+<script>
+    let send_client_feedback_btns = document.getElementsByClassName("send-client-feedback");
+    for (let i = 0; i < send_client_feedback_btns.length; i++) {
+        send_client_feedback_btns[i].addEventListener("click", function (e) {
+            document.getElementById("client_feedback_document_uid").value = send_client_feedback_btns[i]
+                .getAttribute("document_uid")
+            document.getElementById("document-feedback").innerHTML = send_client_feedback_btns[i].getAttribute(
+                "ai-feedback")
+            // document.getElementById("file-preview").src = send_client_feedback_btns[i].getAttribute("url");
+            var myModal = new bootstrap.Modal(document.getElementById('send-client-feedback-modal'));
+            myModal.show();
+        })
+    }
+</script>
+<script>
+    let submit_question_btns = document.getElementsByClassName("question-btn");
+    for (let i = 0; i < submit_question_btns.length; i++) {
+        submit_question_btns[i].addEventListener("click", function (e) {
+            document.getElementById("question_document_uid").value = submit_question_btns[i]
+                .getAttribute("document_uid")
+            var questionModal = new bootstrap.Modal(document.getElementById('ask-question-modal'));
+            questionModal.show();
+        })
+    }
+</script>
+<script>
+    // Set pipeline height
+    let detailHeight = document.getElementById('detail-body').clientHeight;
+    console.log(detailHeight)
+    document.getElementById('pipeline-body').style.maxHeight = detailHeight + 'px';
+</script>
+<script>
+    var dropzones = document.getElementsByClassName("dropzone");
+    let is_image = "{{ current_document_type.is_image }}"
+    console.log("is image: ", is_image);
+    console.log(typeof (is_image))
+    console.log(dropzones);
+    let dropzone;
+
+    for (let i = 0; i < dropzones.length; i++) {
+        console.log("Initializing Dropzone");
+        if (is_image == "True") {
+            dropzone = new Dropzone(dropzones[i], {
+                acceptedFiles: "image/jpeg,image/png,image/gif,image/jpg"
+            });
+        } else {
+            dropzone = new Dropzone(dropzones[i], {
+                acceptedFiles: "application/pdf, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/csv"
+            });
+        }
+        console.log(dropzone)
+        dropzone.on("sending", function (file, xhr, formData) {
+            console.log("File sending");
+            document.getElementById("document-upload").style.display = "none";
+            document.getElementById("document-loading").style.display = "block";
+            formData.append("document_type_pk", "{{ current_document_type.pk }}");
+
+        });
+        dropzone.on("success", function (file, response) {
+            // Refresh the page
+            console.log(file);
+            console.log(response)
+            if (response.status == "success") {
+                window.location.reload();
+                // document.getElementById("document-loading-text").innerHTML = "Analyzing file...";
+                // file_check(response.document_pk);
+            }
+        });
+        console.log("Dropzone initialized: ", dropzone);
+    }
+</script>
+<script>
+    function clickUploadNew() {
+        let dropzone = document.getElementById('fileDropzone');
+
+        // Smooth scroll to the dropzone element
+        dropzone.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+
+        // Change border color to red
+        dropzone.style.borderColor = 'red';
+
+        // Set a timeout to revert the border color back to its original state
+        setTimeout(() => {
+            dropzone.style.borderColor = ''; // Assuming '' is the original color, adjust if necessary
+        }, 2000); // 2000ms delay, adjust as needed
+    }
+</script>
+{% endblock %}
+
+
+{% block end_js %}
+<script>
+let series_data = {{ prospect.get_document_types_series }};
+var options = {
+    series: series_data,
+    colors: ["rgb(10, 207, 151)", "rgb(255, 195, 90)", "rgb(108, 117, 125)", "rgb(250, 92, 124)"], // Specifies colors for the chart
+    chart: {
+        type: 'donut',
+        height: 200,
+    },
+    legend: {
+        show: false
+    },
+    labels: ['Approved', 'Pending', 'Not Uploaded', 'Rejected'],
+};
+
+var chart = new ApexCharts(document.querySelector("#progress"), options);
+chart.render();
+
+</script>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+{% load static %}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">New Prospect</h4>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                <form action="{% url 'create_prospect' %}" method="post">{% csrf_token %}
+                    <div class="mb-3">
+                        <input required name="name" type="text" placeholder="Project Name"
+                            class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        {% include 'includes/address-field.html' %}
+                    </div>
+                    <div class="mb-3">
+                        <input name="amount" type="number" placeholder="Amount" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <select required id="purpose" class="form-select form-control" name="purpose">
+                            <option value="">Choose Purpose</option>
+                            {% for key, value in purpose_choices %}
+                            <option value="{{ key }}">{{ value }}</option>
+                            {% endfor %}
+                        </select>
+
+                    </div>
+                    <div class="mb-3">
+                        <select required id="property-type" class="form-select form-control" name="property-type">
+                            <option value="">Choose Property Type</option>
+                            {% for key, value in property_type_choices %}
+                            <option value="{{ key }}">{{ value }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+            <button type="submit" class="btn btn-primary w-100">Create</button>
+            </form>
+        </div>
+
+        </div>
+        </div> <!-- end card-->
+    </div>
+</div>
+</div>
+
+{% endblock %}
